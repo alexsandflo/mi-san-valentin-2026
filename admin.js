@@ -231,10 +231,15 @@ function initGenerate() {
         // Guardar también en localStorage como respaldo
         localStorage.setItem('valentine_config', json);
 
-        // Construir link — usar la raíz "/" en lugar de "/index.html"
-        // porque el servidor redirige /index.html a / y pierde el hash
-        const origin = window.location.origin;
-        const fullLink = `${origin}/#cfg=${compressed}`;
+        // Construir link correctamente respetando la carpeta del repositorio
+        // (Antes fallaba porque usaba solo el dominio raíz)
+        let baseUrl = window.location.href;
+        // Limpiamos "admin.html", query params o hashes
+        baseUrl = baseUrl.split('?')[0].split('#')[0];
+        // Nos quedamos con la ruta hasta la última barra "/"
+        baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+        
+        const fullLink = `${baseUrl}#cfg=${compressed}`;
 
         linkInput.value = fullLink;
 
