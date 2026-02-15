@@ -18,6 +18,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* Habilitar scroll vertical */
     overflow-x: hidden; /* Evitar scroll horizontal */
 }
 
