@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💝 Configurador - Mi San Valentín</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="admin.css?v=2">
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+</head>
+
+<body class="admin-body">
+
+    <!-- Corazones de fondo -->
+    <div id="hearts-bg"></div>
+
+    <header class="admin-header">
+        <div class="header-content">
+            <span class="header-emoji">💝</span>
+            <h1>Mi San Valentín</h1>
+            <p class="header-sub">Configura tu experiencia mágica de amor</p>
+        </div>
+    </header>
+
+    <main class="admin-main">
+
+        <!-- ====== SECCIÓN 1: Datos de la pareja ====== -->
+        <section class="config-card" data-step="1">
+            <div class="card-header">
+                <span class="card-icon">👤</span>
+                <div>
+                    <h2>Datos de tu Pareja</h2>
+                    <p class="card-desc">Esta información aparecerá en la experiencia</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="partner-name">Nombre de tu pareja</label>
+                    <input type="text" id="partner-name" placeholder="Ej: María, Carlos, Mi Amor..." maxlength="30">
+                    <span class="input-hint">Aparecerá en la pregunta: "¿{nombre}, quieres ser mi San Valentín?"</span>
+                </div>
+                <div class="form-group">
+                    <label for="anniversary-date">Fecha de aniversario</label>
+                    <input type="date" id="anniversary-date">
+                    <span class="input-hint">Se calculará cuántos días llevan juntos 💕</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 2: Fotos ====== -->
+        <section class="config-card" data-step="2">
+            <div class="card-header">
+                <span class="card-icon">📸</span>
+                <div>
+                    <h2>Fotos Juntos</h2>
+                    <p class="card-desc">Flotarán en la galaxia de amor (máx. 15 fotos)</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="photo-grid" class="photo-grid">
+                    <!-- Las fotos aparecerán aquí -->
+                    <label class="photo-add-btn" for="photo-input" id="add-photo-label">
+                        <span class="add-icon">+</span>
+                        <span class="add-text">Agregar foto</span>
+                    </label>
+                    <input type="file" id="photo-input" accept="image/*" multiple hidden>
+                </div>
+                <p id="photo-info" class="photo-info">0 / 15 fotos</p>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 3: Frases de amor ====== -->
+        <section class="config-card" data-step="3">
+            <div class="card-header">
+                <span class="card-icon">💌</span>
+                <div>
+                    <h2>Frases de Amor</h2>
+                    <p class="card-desc">Personaliza las frases que flotarán en la galaxia</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="phrases-list" class="phrases-list">
+                    <!-- Frases aparecen aquí -->
+                </div>
+                <div class="add-phrase-row">
+                    <input type="text" id="new-phrase-input" placeholder="Escribe una frase de amor..." maxlength="50">
+                    <button id="add-phrase-btn" class="btn-add-phrase">+ Agregar</button>
+                </div>
+                <p class="input-hint">Puedes agregar hasta 25 frases. Las predeterminadas se pueden eliminar.</p>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 4: Música ====== -->
+        <section class="config-card" data-step="4">
+            <div class="card-header">
+                <span class="card-icon">🎵</span>
+                <div>
+                    <h2>Canción de Fondo</h2>
+                    <p class="card-desc">Agrega un archivo MP3 que sonará en la experiencia</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Subir archivo MP3</label>
+                    <label class="photo-add-btn" for="music-file-input"
+                        style="display:inline-flex; width:auto; padding: 0.6rem 1.5rem; cursor:pointer;">
+                        <span class="add-icon">🎶</span>
+                        <span class="add-text">Seleccionar MP3</span>
+                    </label>
+                    <input type="file" id="music-file-input" accept="audio/mp3,audio/mpeg,audio/*" hidden>
+                    <span class="input-hint">Coloca el MP3 en la carpeta del proyecto. Máx 10MB. Sin publicidad
+                        🚫</span>
+                </div>
+                <div id="music-preview" class="music-preview hidden">
+                    <p id="music-file-name" style="color: var(--gold); font-size: 0.85rem; margin-bottom: 0.4rem;">✅
+                        Archivo: —</p>
+                    <audio id="music-audio-preview" controls style="width:100%; border-radius:8px;"></audio>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 5: Generar link ====== -->
+        <section class="config-card generate-card" data-step="5">
+            <div class="card-header">
+                <span class="card-icon">🔗</span>
+                <div>
+                    <h2>Generar y Compartir</h2>
+                    <p class="card-desc">Crea el link mágico para enviar a tu pareja</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="validation-msg" class="validation-msg hidden"></div>
+
+                <button id="generate-btn" class="btn-generate">
+                    <span class="gen-icon">✨</span>
+                    <span>GENERAR MI LINK</span>
+                    <span class="gen-icon">✨</span>
+                </button>
+
+                <div id="link-result" class="link-result hidden">
+                    <p class="link-label">🎉 ¡Tu link está listo!</p>
+                    <div class="link-box">
+                        <input type="text" id="generated-link" readonly>
+                        <button id="copy-btn" class="btn-copy" title="Copiar link">📋</button>
+                    </div>
+                    <p id="copy-feedback" class="copy-feedback hidden">✅ ¡Link copiado!</p>
+                    <div class="link-actions">
+                        <a id="preview-btn" class="btn-preview" href="#" target="_blank">👁️ Vista Previa</a>
+                        <a id="whatsapp-btn" class="btn-whatsapp" href="#" target="_blank">💚 Enviar por WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="admin-footer">
+        <p>Hecho con ❤️ para el día de San Valentín</p>
+    </footer>
+
+    <script type="module" src="admin.js?v=2"></script>
+</body>
+
+</html>
