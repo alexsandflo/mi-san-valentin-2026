@@ -16,10 +16,16 @@
     background: var(--admin-bg);
     color: #fff;
     min-height: 100vh;
+    height: auto !important; /* Permitir que crezca más allá del vieboard */
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Habilitar scroll vertical */
-    overflow-x: hidden; /* Evitar scroll horizontal */
+    overflow-y: visible !important; /* Usar scroll del navegador */
+    overflow-x: hidden;
+}
+
+/* Asegurar que html permita scroll */
+html {
+    overflow-y: auto !important;
 }
 
 /* Fondo animado */
