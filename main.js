@@ -171,20 +171,20 @@ function setupTransition() {
   yesBtn.addEventListener('click', () => {
     // 1. Feedback visual inmediato
     yesBtn.classList.add('clicked'); // Clase opcional para efecto visual
-    
+
     // Evitar doble clic, pero asegurar que no bloquee si algo falla antes
     yesBtn.disabled = true;
 
     // 2. Vibración (feature detect y catch simple)
-    try { if (navigator.vibrate) navigator.vibrate([100, 50, 200]); } catch(e) {}
+    try { if (navigator.vibrate) navigator.vibrate([100, 50, 200]); } catch (e) { }
 
     // 3. Intentar música (CRÍTICO: en try-catch para no romper el flujo)
     try {
-        if (window._valentineStartMusic) {
-            window._valentineStartMusic();
-        }
+      if (window._valentineStartMusic) {
+        window._valentineStartMusic();
+      }
     } catch (err) {
-        console.warn('Advertencia: Audio autoplay falló, pero continuamos.', err);
+      console.warn('Advertencia: Audio autoplay falló, pero continuamos.', err);
     }
 
     // 4. Iniciar Transición (Independiente del audio)
@@ -192,28 +192,28 @@ function setupTransition() {
 
     // Usar requestAnimationFrame para asegurar que el UI se actualice antes de bloquear
     requestAnimationFrame(() => {
+      setTimeout(() => {
+        // Ocultar landing y mostrar galaxia
+        landing.classList.add('fade-out');
+        landing.style.pointerEvents = 'none'; // Asegurar que no estorbe
+
+        galaxy.classList.remove('hidden');
+
+        // Asegurar que Three.js inicie
+        try {
+          initGalaxy();
+        } catch (err) {
+          console.error('Error iniciando galaxia:', err);
+          // Fallback de emergencia por si Three.js falla: mostrar mensaje o fondo simple
+          alert('Tu universo se está cargando... si tarda, recarga la página ✨');
+        }
+
+        // Limpieza de transición
         setTimeout(() => {
-            // Ocultar landing y mostrar galaxia
-            landing.classList.add('fade-out');
-            landing.style.pointerEvents = 'none'; // Asegurar que no estorbe
-            
-            galaxy.classList.remove('hidden');
-
-            // Asegurar que Three.js inicie
-            try {
-                initGalaxy();
-            } catch (err) {
-                console.error('Error iniciando galaxia:', err);
-                // Fallback de emergencia por si Three.js falla: mostrar mensaje o fondo simple
-                alert('Tu universo se está cargando... si tarda, recarga la página ✨');
-            }
-
-            // Limpieza de transición
-            setTimeout(() => {
-                overlay.classList.remove('active');
-                setTimeout(() => { landing.style.display = 'none'; }, 600);
-            }, 1000);
-        }, 800); // Reducido ligeramente tiempo de espera para sensación más rápida
+          overlay.classList.remove('active');
+          setTimeout(() => { landing.style.display = 'none'; }, 600);
+        }, 1000);
+      }, 800); // Reducido ligeramente tiempo de espera para sensación más rápida
     });
   });
 }
@@ -839,6 +839,8 @@ function onWindowResize() {
 //  8. REPRODUCTOR DE MÚSICA MP3
 // =============================================
 
+let audioPlayer = null;
+
 function loadMusicPlayer(filename) {
   // Cargar audio
   audioPlayer = new Audio(filename);
@@ -855,8 +857,6 @@ function loadMusicPlayer(filename) {
 
   audioPlayer.addEventListener('error', (e) => {
     console.warn('Error cargando audio:', filename, e);
-    // Opcional: Ocultar botón si falla
-    // if(btn) btn.classList.add('hidden'); 
   });
 }
 
