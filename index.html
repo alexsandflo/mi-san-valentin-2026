@@ -4,105 +4,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>¿Quieres ser mi San Valentín? 💕</title>
-    <meta name="description"
-        content="Una experiencia mágica de San Valentín con una galaxia 3D interactiva llena de amor.">
+    <title>Para mi San Valentín ❤️</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@300;400;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@300;400;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-    <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
+    <!-- Compresión para config en URL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 </head>
 
 <body>
 
-    <!-- ============ LANDING PAGE ============ -->
-    <div id="landing">
-        <div id="hearts-container"></div>
-        <div class="center-glow"></div>
+    <!-- MÚSICA DE FONDO (Control flotante) -->
+    <div id="music-control" class="music-control">
+        <button id="music-toggle" class="music-btn hidden" aria-label="Reproducir música">
+            <span class="music-icon">🎵</span>
+            <div class="music-bars">
+                <span></span><span></span><span></span>
+            </div>
+        </button>
+    </div>
 
-        <div class="landing-content">
-            <div class="emoji-float">💕</div>
-            <h1 class="title" id="main-title">¿Quieres ser mi<br><span class="highlight">San Valentín</span> ?</h1>
+    <!-- PANTALLA 1: LANDING / CARTA -->
+    <section id="landing" class="landing-section">
+        <div class="hearts-bg" id="hearts-container"></div>
 
-            <!-- Contador en vivo -->
-            <div id="countdown-section" class="countdown-section hidden">
-                <p class="countdown-label">Mi amor por ti comenzó hace...</p>
-                <div class="countdown-boxes">
-                    <div class="countdown-box">
-                        <span class="countdown-number" id="cd-days">0</span>
-                        <span class="countdown-unit">Días</span>
-                    </div>
-                    <div class="countdown-box">
-                        <span class="countdown-number" id="cd-hours">0</span>
-                        <span class="countdown-unit">Horas</span>
-                    </div>
-                    <div class="countdown-box">
-                        <span class="countdown-number" id="cd-mins">0</span>
-                        <span class="countdown-unit">Minutos</span>
-                    </div>
-                    <div class="countdown-box">
-                        <span class="countdown-number" id="cd-secs">0</span>
-                        <span class="countdown-unit">Segundos</span>
-                    </div>
+        <div class="card-glass">
+            <h1 class="title-animation" id="main-title">Hola mi amor,<br>¿Quieres ser mi<br><span
+                    class="highlight">San Valentín</span> ?</h1>
+
+            <!-- Countdown (oculto por defecto si no hay fecha) -->
+            <div id="countdown-section" class="countdown hidden">
+                <p class="count-label">Juntos desde hace:</p>
+                <div class="timer">
+                    <div class="time-box"><span id="cd-days">0</span><small>Días</small></div>
+                    <div class="time-box"><span id="cd-hours">00</span><small>Hs</small></div>
+                    <div class="time-box"><span id="cd-mins">00</span><small>Min</small></div>
+                    <div class="time-box"><span id="cd-secs">00</span><small>Seg</small></div>
                 </div>
             </div>
 
-            <p class="subtitle-heart">❤️</p>
-            <button id="yes-btn" class="pulse-btn">
-                <span class="btn-text">SÍ</span>
-                <span class="btn-heart">💝</span>
-            </button>
+            <div class="buttons">
+                <button id="yes-btn" class="btn-yes">
+                    ¡Sí, quiero! 💖
+                </button>
+            </div>
         </div>
-    </div>
 
-    <!-- ============ GALAXY PAGE ============ -->
-    <div id="galaxy" class="hidden">
+        <!-- Mensaje si no hay config -->
+        <div id="no-config" class="no-config-msg hidden">
+            <p>⚠️ Falta configuración</p>
+            <a href="admin.html" class="config-link">Ir al Configurador</a>
+        </div>
+    </section>
+
+    <!-- PANTALLA 2: GALAXIA 3D -->
+    <section id="galaxy" class="galaxy-section hidden">
         <canvas id="galaxy-canvas"></canvas>
-        <div id="galaxy-ui">
-            <div class="galaxy-title-bar glass-card-mini">
-                <span id="galaxy-title-text">✨ Tu Galaxia de Amor ✨</span>
-            </div>
-            <div class="galaxy-hint-bar glass-card-mini">
-                <span>🖱️ Arrastra para explorar · Scroll para zoom</span>
-            </div>
+        <div class="overlay-ui">
+            <h2 id="galaxy-title-text" class="galaxy-title">Nuestro Universo</h2>
         </div>
+    </section>
+
+    <!-- Transición suave -->
+    <div id="transition-overlay" class="transition-overlay">
+        <div class="heart-loader">❤️</div>
     </div>
 
-    <!-- Superposición de transición -->
-    <div id="transition-overlay">
-        <div class="warp-lines"></div>
-        <p class="transition-text">Viajando a tu galaxia...</p>
-    </div>
+    <!-- ES Modules para Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
 
-
-    <!-- Botón flotante de música -->
-    <button id="music-toggle" class="music-toggle hidden" title="Reproducir/Pausar música">
-        <span class="music-icon">🎵</span>
-        <span class="music-bars">
-            <span></span><span></span><span></span>
-        </span>
-    </button>
-
-    <!-- Sin configuración -->
-    <div id="no-config" class="hidden">
-        <div class="no-config-content">
-            <p class="no-config-emoji">💔</p>
-            <h2>¡Falta la configuración!</h2>
-            <p>Este link necesita ser generado desde el panel de configuración.</p>
-            <a href="admin.html" class="btn-go-admin">💝 Ir al Configurador</a>
-        </div>
-    </div>
-
+    <!-- Configuración Persistente (Opcional, generada desde admin) -->
+    <script src="config.js"></script>
     <script type="module" src="main.js"></script>
 </body>
 
