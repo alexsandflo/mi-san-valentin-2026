@@ -634,65 +634,121 @@ function buildFlyingHeartsEmoji(isMobile) {
   }
 }
 
-// --------------- MARCOS DE FOTOS (MEJORADOS) ---------------
+// --------------- MARCOS DE FOTOS (DISTRIBUCIÓN EN ANILLOS) ---------------
 function buildPhotoFrames(isMobile) {
   const photos = CONFIG.photos;
   if (!photos || photos.length === 0) return;
   const total = photos.length;
-  // En móvil: fotos más cerca del centro para verlas mejor
-  const baseRadius = isMobile ? 12 : 16;
 
-  photos.forEach((dataUrl, idx) => {
-    const texture = new THREE.TextureLoader().load(dataUrl);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    // En móvil: fotos más grandes (5.5 vs 4)
-    const size = isMobile ? 5.5 : 4;
-    const border = isMobile ? 0.4 : 0.35;
+  // Definir anillos concéntricos con diferentes radios, alturas y velocidades
+  // Cada anillo tiene suficiente espacio para que las fotos no se tapen
+  const rings = isMobile ? [
+    { radius: 14, y: 0,    speed: 0.05,  maxPhotos: 4 },
+    { radius: 22, y: 3,    speed: 0.035, maxPhotos: 5 },
+    { radius: 30, y: -2,   speed: 0.025, maxPhotos: 6 },
+    { radius: 38, y: 1.5,  speed: 0.018, maxPhotos: 7 },
+    { radius: 46, y: -3,   speed: 0.012, maxPhotos: 8 },
+  ] : [
+    { radius: 16, y: 0,    speed: 0.06,  maxPhotos: 4 },
+    { radius: 24, y: 3,    speed: 0.04,  maxPhotos: 5 },
+    { radius: 32, y: -2,   speed: 0.03,  maxPhotos: 6 },
+    { radius: 40, y: 2,    speed: 0.02,  maxPhotos: 7 },
+    { radius: 48, y: -3,   speed: 0.015, maxPhotos: 8 },
+  ];
 
-    const frame = new THREE.Mesh(
-      new THREE.PlaneGeometry(size + border * 2, size + border * 2),
-      new THREE.MeshBasicMaterial({ color: 0xffd54f, side: THREE.DoubleSide })
-    );
-    const inner = new THREE.Mesh(
-      new THREE.PlaneGeometry(size + border, size + border),
-      new THREE.MeshBasicMaterial({ color: 0x0d0020, side: THREE.DoubleSide })
-    );
-    inner.position.z = 0.005;
-    const photo = new THREE.Mesh(
-      new THREE.PlaneGeometry(size, size),
-      new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true })
-    );
-    photo.position.z = 0.01;
+  // Fotos un poco más pequeñas en móvil para evitar solapamiento
+  const size = isMobile ? 3.8 : 4;
+  const border = 0.3;
 
-    // Emoji debajo
-    const lc = document.createElement('canvas');
-    lc.width = 256; lc.height = 80;
-    const lctx = lc.getContext('2d');
-    lctx.font = '48px serif'; lctx.textAlign = 'center';
-    lctx.fillText('💕', 128, 50);
-    const label = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: new THREE.CanvasTexture(lc), transparent: true, opacity: 0.85,
-    }));
-    label.scale.set(2, 0.7, 1);
-    label.position.set(0, -(size / 2 + 1), 0);
+  // Distribuir fotos entre los anillos
+  let photoIdx = 0;
 
-    const group = new THREE.Group();
-    group.add(frame); group.add(inner); group.add(photo); group.add(label);
+  // Calcular cuántas fotos van en cada anillo proporcionalmente
+  const photosPerRing = [];
+  let remaining = total;
+  for (let r = 0; r < rings.length && remaining > 0; r++) {
+    const count = Math.min(rings[r].maxPhotos, remaining);
+    photosPerRing.push(count);
+    remaining -= count;
+    if (remaining <= 0) break;
+  }
+  // Si sobran fotos, repartirlas entre los anillos existentes
+  while (remaining > 0) {
+    for (let r = 0; r < photosPerRing.length && remaining > 0; r++) {
+      photosPerRing[r]++;
+      remaining--;
+    }
+  }
 
-    // Distribución uniforme — en móvil las fotos están más cerca y menos separadas en Y
-    const angle = (idx / total) * Math.PI * 2;
-    const radiusTier = baseRadius + (idx % 2) * (isMobile ? 3 : 5);
-    const yOff = (idx % 2 === 0) ? (isMobile ? 1.5 : 2) : (isMobile ? -1.5 : -2);
-    group.position.set(Math.cos(angle) * radiusTier, yOff, Math.sin(angle) * radiusTier);
-    group.rotation.y = -angle + Math.PI;
+  photoIdx = 0;
+  for (let r = 0; r < photosPerRing.length; r++) {
+    const ring = rings[r];
+    const countInRing = photosPerRing[r];
+    const angleOffset = r * 0.5; // Desfase entre anillos para no alinear
 
-    group.userData = {
-      angle, orbitRadius: radiusTier, speed: isMobile ? 0.04 : 0.06,
-      bobSpeed: 0.3 + Math.random() * 0.3, bobAmp: 0.15 + Math.random() * 0.15, yBase: yOff,
-    };
-    photoGroups.push(group);
-    scene.add(group);
-  });
+    for (let i = 0; i < countInRing; i++) {
+      if (photoIdx >= total) break;
+      const dataUrl = photos[photoIdx];
+
+      const texture = new THREE.TextureLoader().load(dataUrl);
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      const frame = new THREE.Mesh(
+        new THREE.PlaneGeometry(size + border * 2, size + border * 2),
+        new THREE.MeshBasicMaterial({ color: 0xffd54f, side: THREE.DoubleSide })
+      );
+      const inner = new THREE.Mesh(
+        new THREE.PlaneGeometry(size + border, size + border),
+        new THREE.MeshBasicMaterial({ color: 0x0d0020, side: THREE.DoubleSide })
+      );
+      inner.position.z = 0.005;
+      const photo = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size),
+        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true })
+      );
+      photo.position.z = 0.01;
+
+      // Emoji debajo
+      const lc = document.createElement('canvas');
+      lc.width = 256; lc.height = 80;
+      const lctx = lc.getContext('2d');
+      lctx.font = '48px serif'; lctx.textAlign = 'center';
+      lctx.fillText('💕', 128, 50);
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(lc), transparent: true, opacity: 0.85,
+      }));
+      label.scale.set(2, 0.7, 1);
+      label.position.set(0, -(size / 2 + 1), 0);
+
+      const group = new THREE.Group();
+      group.add(frame); group.add(inner); group.add(photo); group.add(label);
+
+      // Ángulo equidistante dentro del anillo + desfase por anillo
+      const angle = angleOffset + (i / countInRing) * Math.PI * 2;
+      // Variación vertical para evitar línea plana
+      const yVariation = (i % 3 === 0) ? 0 : (i % 3 === 1) ? 1.8 : -1.8;
+      const yOff = ring.y + yVariation;
+
+      group.position.set(
+        Math.cos(angle) * ring.radius,
+        yOff,
+        Math.sin(angle) * ring.radius
+      );
+      group.rotation.y = -angle + Math.PI;
+
+      group.userData = {
+        angle,
+        orbitRadius: ring.radius,
+        speed: ring.speed,
+        bobSpeed: 0.2 + Math.random() * 0.3,
+        bobAmp: 0.1 + Math.random() * 0.15,
+        yBase: yOff,
+      };
+      photoGroups.push(group);
+      scene.add(group);
+      photoIdx++;
+    }
+  }
 }
 
 // --------------- FRASES CON FONDO GLASS ---------------
