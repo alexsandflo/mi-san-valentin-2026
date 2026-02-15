@@ -1,6 +1,6 @@
 window.VALENTINE_CONFIG = {
   "n": "Mi niña bonita",
-  "d": "2023-07-28",
+  "d": "2023-06-28",
   "p": [
     "Te amo ❤️",
     "Eres mi universo 🌌",
