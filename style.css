@@ -409,16 +409,39 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
+    .card-glass {
+        padding: 2rem 1rem; /* Menos relleno para dar más espacio al contenido */
+        width: 95%; /* Usar más ancho de pantalla */
+    }
+
     .title-animation {
-        font-size: 2rem;
+        font-size: 1.8rem; /* Texto más pequeño y elegante */
+        margin-bottom: 1.5rem;
     }
 
     .highlight {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
+        margin-top: 0.5rem;
+    }
+
+    .count-label {
+        font-size: 0.75rem;
+    }
+
+    .time-box span {
+        font-size: 1.4rem; /* Números del timer más balanceados */
+    }
+
+    .btn-yes {
+        padding: 0.8rem 2rem; /* Botón más manejable */
+        font-size: 1.1rem;
+        width: 100%; /* Botón ancho completo en móvil */
+        max-width: 250px;
     }
 
     .galaxy-title {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
+        padding: 0 10px;
     }
 }
 
