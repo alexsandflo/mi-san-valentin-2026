@@ -319,8 +319,7 @@ function initGalaxy() {
   scene.fog = new THREE.FogExp2(0x050010, 0.004);
 
   camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1500);
-  // En móvil la cámara empieza más cerca para ver fotos mejor
-  camera.position.set(0, isMobile ? 5 : 8, isMobile ? 22 : 35);
+  camera.position.set(0, isMobile ? 6 : 8, isMobile ? 28 : 35);
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -331,34 +330,26 @@ function initGalaxy() {
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.1;
-  controls.minDistance = 5;  // Permite acercarse mucho más a las fotos
-  controls.maxDistance = 120;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 5;
+  controls.maxDistance = 150;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = isMobile ? 0.25 : 0.4; // Más lento en móvil para apreciar fotos
+  controls.autoRotateSpeed = isMobile ? 0.2 : 0.4;
   controls.enablePan = true;
-  controls.rotateSpeed = isMobile ? 0.6 : 0.4; // Más sensible al rotar en móvil
-  controls.enableZoom = true; // Zoom habilitado para pinch-to-zoom nativo
-  controls.zoomSpeed = 0.8;
-  controls.panSpeed = 0.4;
+  controls.rotateSpeed = isMobile ? 0.8 : 0.5;
+  controls.enableZoom = true;
+  controls.zoomSpeed = isMobile ? 1.2 : 0.8;
+  controls.panSpeed = isMobile ? 0.8 : 0.4;
+  controls.minPolarAngle = 0;           // Permite mirar desde arriba
+  controls.maxPolarAngle = Math.PI;     // Permite mirar desde abajo
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   controls.target.set(0, 0, 0);
   controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 
-  // Zoom suave con scroll (desktop)
-  let targetZoomDistance = camera.position.length();
-  renderer.domElement.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const zoomFactor = e.deltaY > 0 ? 1.05 : 0.95;
-    targetZoomDistance = Math.max(controls.minDistance, Math.min(controls.maxDistance, targetZoomDistance * zoomFactor));
-  }, { passive: false });
-
-  scene.userData.getTargetZoom = () => targetZoomDistance;
-  scene.userData.setTargetZoom = (v) => { targetZoomDistance = v; };
-
+  // Pausar auto-rotación al interactuar, reanudar después
   renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; });
   renderer.domElement.addEventListener('pointerup', () => {
-    setTimeout(() => { controls.autoRotate = true; }, 4000);
+    setTimeout(() => { controls.autoRotate = true; }, 5000);
   });
 
   buildStarField(isMobile);
@@ -831,14 +822,15 @@ function animate() {
   const ml = scene.userData.mainLight;
   if (ml) { ml.intensity = 4 + Math.sin(t * 2.5) * 1.5; }
 
-  // Fotos orbitan
+  // Fotos orbitan — SIEMPRE miran hacia la cámara (billboard)
   photoGroups.forEach((g) => {
     const d = g.userData;
     d.angle += d.speed * 0.004;
     g.position.x = Math.cos(d.angle) * d.orbitRadius;
     g.position.z = Math.sin(d.angle) * d.orbitRadius;
     g.position.y = d.yBase + Math.sin(t * d.bobSpeed) * d.bobAmp;
-    g.rotation.y = -d.angle + Math.PI;
+    // Billboard: las fotos siempre miran a la cámara
+    g.lookAt(camera.position);
   });
 
   // Frases orbitan
@@ -873,15 +865,7 @@ function animate() {
     h.position.y = d.yBase + Math.sin(t * d.bobSpeed) * d.bobAmp;
   });
 
-  // Zoom suave
-  if (scene.userData.getTargetZoom) {
-    const target = scene.userData.getTargetZoom();
-    const dir = camera.position.clone().sub(controls.target).normalize();
-    const currentDist = camera.position.distanceTo(controls.target);
-    const newDist = currentDist + (target - currentDist) * 0.05;
-    camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
-  }
-
+  // OrbitControls maneja el zoom nativamente — sin interferencia
   controls.update();
   renderer.render(scene, camera);
 }
