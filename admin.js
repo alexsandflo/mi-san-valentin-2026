@@ -7,7 +7,7 @@
 //  1. ESTADO
 // =============================================
 
-const MAX_PHOTOS = 15;
+const MAX_PHOTOS = 30;
 const MAX_PHRASES = 25;
 
 const state = {
@@ -55,7 +55,7 @@ function initPhotoUpload() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Mostrar estado de carga (opcional, visualmente simple cambiando texto del label)
+        // Mostrar estado de carga
         const originalText = addLabel.querySelector('.add-text').textContent;
         addLabel.querySelector('.add-text').textContent = '⏳';
         addLabel.style.pointerEvents = 'none';
@@ -66,7 +66,7 @@ function initPhotoUpload() {
                 break;
             }
             try {
-                const compressed = await compressImage(file, 300, 0.6); // Un poco más de calidad (300px, 0.6)
+                const compressed = await compressImage(file, 300, 0.6); // Buena calidad para hasta 30 fotos
                 state.photos.push(compressed);
                 renderPhotoItem(compressed, state.photos.length - 1);
             } catch (err) {
@@ -232,13 +232,10 @@ function initGenerate() {
         localStorage.setItem('valentine_config', json);
 
         // Construir link correctamente respetando la carpeta del repositorio
-        // (Antes fallaba porque usaba solo el dominio raíz)
         let baseUrl = window.location.href;
-        // Limpiamos "admin.html", query params o hashes
         baseUrl = baseUrl.split('?')[0].split('#')[0];
-        // Nos quedamos con la ruta hasta la última barra "/"
         baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-        
+
         const fullLink = `${baseUrl}#cfg=${compressed}`;
 
         linkInput.value = fullLink;
@@ -254,14 +251,13 @@ function initGenerate() {
         linkResult.classList.remove('hidden');
         linkResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // === NUEVO: Botón de Descarga para config.js ===
-        // Verificar si ya existe el botón, si no crearlo
+        // === Botón de Descarga para config.js ===
         let dlBtn = document.getElementById('download-config-btn');
         if (!dlBtn) {
             const container = document.querySelector('.link-actions');
             dlBtn = document.createElement('a');
             dlBtn.id = 'download-config-btn';
-            dlBtn.className = 'btn-preview'; // Reusar estilo
+            dlBtn.className = 'btn-preview';
             dlBtn.style.background = '#e91e63';
             dlBtn.style.marginTop = '10px';
             dlBtn.style.width = '100%';
@@ -338,6 +334,10 @@ function initMusic() {
 }
 
 // =============================================
+//  8. INICIALIZACIÓN
+// =============================================
+
+// =============================================
 //  9. CARGAR CONFIGURACIÓN GUARDADA (Auto-relleno)
 // =============================================
 
@@ -346,7 +346,7 @@ function loadSavedConfig() {
         const stored = localStorage.getItem('valentine_config');
         if (stored) {
             const config = JSON.parse(stored);
-            
+
             // 1. Restaurar Nombre y Fecha
             if (config.n) {
                 state.partnerName = config.n;
@@ -366,15 +366,12 @@ function loadSavedConfig() {
             // 3. Restaurar Fotos
             if (config.i && Array.isArray(config.i)) {
                 state.photos = config.i;
-                // Reconstruir grid visualmente
                 const grid = document.getElementById('photo-grid');
                 const addLabel = document.getElementById('add-photo-label');
                 const info = document.getElementById('photo-info');
-                
-                // Limpiar grid actual (menos el botón de agregar)
+
                 grid.querySelectorAll('.photo-item').forEach(el => el.remove());
-                
-                // Renderizar cada foto guardada
+
                 state.photos.forEach((url, i) => {
                     const div = document.createElement('div');
                     div.classList.add('photo-item');
@@ -388,14 +385,11 @@ function loadSavedConfig() {
                     removeBtn.textContent = '✕';
                     removeBtn.addEventListener('click', () => {
                         state.photos.splice(i, 1);
-                        // Re-renderizar todo para actualizar índices
-                        // (Simplificación recursiva rápida)
                         state.photos = state.photos.filter((_, idx) => idx !== i);
-                         // Guardar cambio
                         localStorage.setItem('valentine_config', JSON.stringify({
-                             ...config, i: state.photos
+                            ...config, i: state.photos
                         }));
-                        location.reload(); // Recarga rápida para actualizar vista (truco sucio pero efectivo aquí)
+                        location.reload();
                     });
 
                     div.appendChild(img);
@@ -404,12 +398,12 @@ function loadSavedConfig() {
                 });
 
                 info.textContent = `${state.photos.length} / ${MAX_PHOTOS} fotos`;
-                 if (state.photos.length >= MAX_PHOTOS) {
+                if (state.photos.length >= MAX_PHOTOS) {
                     addLabel.style.display = 'none';
                 }
             }
-            
-            // 4. Música (Solo nombre, archivo real requiere re-upload por seguridad del navegador)
+
+            // 4. Música
             if (config.m) {
                 state.musicFile = config.m;
                 document.getElementById('music-file-name').textContent = `⚠️ Previo: ${config.m} (Vuelve a subirlo si cambiaste algo)`;
@@ -423,15 +417,13 @@ function loadSavedConfig() {
 // Inicializar todo
 initPartnerInputs();
 initPhotoUpload();
-// initPhrases(); // Ya se llama en loadSavedConfig si hay datos, o manual abajo
-// Para evitar duplicados, limpiamos state.phrases si vamos a cargar
 loadSavedConfig();
-if (state.phrases.length === 0) initPhrases(); // Si no había nada guardado
+if (state.phrases.length === 0) initPhrases();
 else {
     const newInput = document.getElementById('new-phrase-input');
     const addBtn = document.getElementById('add-phrase-btn');
     addBtn.addEventListener('click', () => {
-         const text = newInput.value.trim();
+        const text = newInput.value.trim();
         if (!text || state.phrases.length >= MAX_PHRASES) return;
         state.phrases.push(text);
         newInput.value = '';
