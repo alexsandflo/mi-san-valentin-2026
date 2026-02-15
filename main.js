@@ -801,23 +801,24 @@ function onWindowResize() {
 //  8. REPRODUCTOR DE MÚSICA MP3
 // =============================================
 
-let audioPlayer = null;
-
 function loadMusicPlayer(filename) {
+  // Cargar audio
   audioPlayer = new Audio(filename);
   audioPlayer.loop = true;
   audioPlayer.volume = 0.7;
   audioPlayer.preload = 'auto';
 
-  audioPlayer.addEventListener('canplaythrough', () => {
-    // Mostrar botón de música cuando el audio está listo
-    const btn = document.getElementById('music-toggle');
+  // Mostrar botón inmediatamente si hay música configurada
+  const btn = document.getElementById('music-toggle');
+  if (btn) {
     btn.classList.remove('hidden');
     setupMusicButton();
-  }, { once: true });
+  }
 
-  audioPlayer.addEventListener('error', () => {
-    console.warn('No se pudo cargar el audio:', filename);
+  audioPlayer.addEventListener('error', (e) => {
+    console.warn('Error cargando audio:', filename, e);
+    // Opcional: Ocultar botón si falla
+    // if(btn) btn.classList.add('hidden'); 
   });
 }
 
