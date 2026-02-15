@@ -249,6 +249,30 @@ function initGenerate() {
         linkResult.classList.remove('hidden');
         linkResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+        // === NUEVO: Botón de Descarga para config.js ===
+        // Verificar si ya existe el botón, si no crearlo
+        let dlBtn = document.getElementById('download-config-btn');
+        if (!dlBtn) {
+            const container = document.querySelector('.link-actions');
+            dlBtn = document.createElement('a');
+            dlBtn.id = 'download-config-btn';
+            dlBtn.className = 'btn-preview'; // Reusar estilo
+            dlBtn.style.background = '#e91e63';
+            dlBtn.style.marginTop = '10px';
+            dlBtn.style.width = '100%';
+            dlBtn.textContent = '📥 Descargar config.js (Para Móviles)';
+            dlBtn.title = 'Sube este archivo a GitHub si el link no funciona en celular';
+            container.appendChild(dlBtn);
+        }
+
+        // Crear contenido del archivo
+        const fileContent = `window.VALENTINE_CONFIG = ${JSON.stringify(config, null, 2)};`;
+        const blob = new Blob([fileContent], { type: 'text/javascript' });
+        const url = URL.createObjectURL(blob);
+        dlBtn.href = url;
+        dlBtn.download = 'config.js';
+
+
         // Vibración (móvil)
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     });
