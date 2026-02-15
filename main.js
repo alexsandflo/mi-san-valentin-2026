@@ -12,7 +12,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // =============================================
 
 function loadConfig() {
-  // Intentar cargar desde URL hash
   const hash = window.location.hash;
   if (hash && hash.includes('cfg=')) {
     try {
@@ -20,7 +19,6 @@ function loadConfig() {
       const json = window.LZString.decompressFromEncodedURIComponent(encoded);
       if (json) {
         const config = JSON.parse(json);
-        // Guardar en localStorage como respaldo
         localStorage.setItem('valentine_config', json);
         return {
           name: config.n || '',
@@ -36,7 +34,6 @@ function loadConfig() {
     }
   }
 
-  // Fallback 1: Cargar desde archivo config.js (Persistente y recomendado para móviles)
   if (window.VALENTINE_CONFIG) {
     const config = window.VALENTINE_CONFIG;
     return {
@@ -49,7 +46,6 @@ function loadConfig() {
     };
   }
 
-  // Fallback 2: intentar cargar de localStorage (mismo navegador)
   try {
     const stored = localStorage.getItem('valentine_config');
     if (stored) {
@@ -77,20 +73,19 @@ const CONFIG = loadConfig();
 // =============================================
 
 function init() {
+  console.log('[Valentine] init() arrancando...', CONFIG);
+  
   if (!CONFIG) {
-    // No hay configuración → mostrar mensaje
     document.getElementById('landing').style.display = 'none';
     document.getElementById('no-config').classList.remove('hidden');
     return;
   }
 
-  // Personalizar el título con el nombre
   const titleEl = document.getElementById('main-title');
   if (CONFIG.name) {
     titleEl.innerHTML = `${CONFIG.name},<br>¿Quieres ser mi<br><span class="highlight">San Valentín</span> ?`;
   }
 
-  // Countdown en vivo (Días, Horas, Minutos, Segundos)
   if (CONFIG.date) {
     const section = document.getElementById('countdown-section');
     section.classList.remove('hidden');
@@ -118,18 +113,19 @@ function init() {
     setInterval(updateCountdown, 1000);
   }
 
-  // Personalizar título de la galaxia
   const galaxyTitle = document.getElementById('galaxy-title-text');
-  galaxyTitle.textContent = `✨ La Galaxia de ${CONFIG.name} ✨`;
+  if (galaxyTitle) {
+    galaxyTitle.textContent = `✨ La Galaxia de ${CONFIG.name} ✨`;
+  }
 
-  // Cargar música si hay archivo configurado
   if (CONFIG.musicFile) {
     loadMusicPlayer(CONFIG.musicFile);
   }
 
-  // Iniciar experiencia
   createFloatingHearts();
   setupTransition();
+  
+  console.log('[Valentine] init() completado OK. Botón SÍ listo.');
 }
 
 // =============================================
@@ -138,6 +134,7 @@ function init() {
 
 function createFloatingHearts() {
   const container = document.getElementById('hearts-container');
+  if (!container) return;
   const heartChars = ['❤', '💕', '♥', '💗', '💖', '✨', '💘'];
   const colors = ['#e91e63', '#f48fb1', '#fce4ec', '#ff4081', '#c2185b', '#ffd54f', '#ce93d8', '#ff80ab'];
 
@@ -168,53 +165,78 @@ function setupTransition() {
   const galaxy = document.getElementById('galaxy');
   const overlay = document.getElementById('transition-overlay');
 
-  yesBtn.addEventListener('click', () => {
-    // 1. Feedback visual inmediato
-    yesBtn.classList.add('clicked'); // Clase opcional para efecto visual
+  if (!yesBtn || !landing || !galaxy || !overlay) {
+    console.error('[Valentine] ERROR: No se encontraron los elementos necesarios para la transición');
+    return;
+  }
 
-    // Evitar doble clic, pero asegurar que no bloquee si algo falla antes
-    yesBtn.disabled = true;
+  console.log('[Valentine] setupTransition: evento click registrado en botón SÍ');
 
-    // 2. Vibración (feature detect y catch simple)
+  yesBtn.addEventListener('click', function() {
+    console.log('[Valentine] ¡Botón SÍ presionado!');
+    
+    // Desactivar botón para evitar doble clic
+    yesBtn.style.pointerEvents = 'none';
+    yesBtn.style.opacity = '0.6';
+
+    // Vibración
     try { if (navigator.vibrate) navigator.vibrate([100, 50, 200]); } catch (e) { }
 
-    // 3. Intentar música (CRÍTICO: en try-catch para no romper el flujo)
+    // Intentar música
     try {
       if (window._valentineStartMusic) {
         window._valentineStartMusic();
       }
     } catch (err) {
-      console.warn('Advertencia: Audio autoplay falló, pero continuamos.', err);
+      console.warn('[Valentine] Audio autoplay falló:', err);
     }
 
-    // 4. Iniciar Transición (Independiente del audio)
-    overlay.classList.add('active');
+    // === TRANSICIÓN ===
+    // Paso 1: Mostrar overlay de "Viajando a tu galaxia..."
+    overlay.style.opacity = '1';
+    console.log('[Valentine] Overlay activado');
 
-    // Usar requestAnimationFrame para asegurar que el UI se actualice antes de bloquear
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        // Ocultar landing y mostrar galaxia
-        landing.classList.add('fade-out');
-        landing.style.pointerEvents = 'none'; // Asegurar que no estorbe
+    // Paso 2: Después de 1.2s, hacer la transición
+    setTimeout(function() {
+      console.log('[Valentine] Iniciando transición a galaxia...');
+      
+      // Ocultar landing
+      landing.style.opacity = '0';
+      landing.style.transform = 'scale(2)';
+      landing.style.pointerEvents = 'none';
 
-        galaxy.classList.remove('hidden');
+      // Mostrar galaxia (quitar la clase hidden y el display:none)
+      galaxy.className = ''; // Quitar TODAS las clases, incluida "hidden"
+      galaxy.style.display = 'block';
+      galaxy.style.position = 'fixed';
+      galaxy.style.inset = '0';
+      galaxy.style.zIndex = '50'; // Por encima del landing (z-index:10)
+      galaxy.style.background = '#000';
 
-        // Asegurar que Three.js inicie
-        try {
-          initGalaxy();
-        } catch (err) {
-          console.error('Error iniciando galaxia:', err);
-          // Fallback de emergencia por si Three.js falla: mostrar mensaje o fondo simple
-          alert('Tu universo se está cargando... si tarda, recarga la página ✨');
-        }
+      console.log('[Valentine] Galaxy visible, iniciando Three.js...');
 
-        // Limpieza de transición
-        setTimeout(() => {
-          overlay.classList.remove('active');
-          setTimeout(() => { landing.style.display = 'none'; }, 600);
-        }, 1000);
-      }, 800); // Reducido ligeramente tiempo de espera para sensación más rápida
-    });
+      // Iniciar Three.js
+      try {
+        initGalaxy();
+        console.log('[Valentine] ¡Galaxy iniciada exitosamente!');
+      } catch (err) {
+        console.error('[Valentine] Error iniciando galaxia:', err);
+        // Mostrar un fondo negro con mensaje en vez de nada
+        galaxy.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#f48fb1;font-family:Pacifico,cursive;font-size:1.5rem;text-align:center;padding:2rem;">✨ Tu galaxia de amor ✨<br><br>Recarga la página para ver las estrellas 💫</div>';
+      }
+
+      // Paso 3: Quitar overlay después de que la galaxia esté lista
+      setTimeout(function() {
+        overlay.style.opacity = '0';
+        console.log('[Valentine] Overlay ocultado, transición completa');
+        
+        // Limpiar landing completamente
+        setTimeout(function() {
+          landing.style.display = 'none';
+        }, 600);
+      }, 1200);
+
+    }, 1000);
   });
 }
 
@@ -229,7 +251,6 @@ const quoteSprites = [];
 const shootingStars = [];
 const flyingHearts = [];
 
-/* ----- Textura circular para partículas (evita cuadrados) ----- */
 function createParticleTexture(r, g, b) {
   const c = document.createElement('canvas');
   c.width = 64; c.height = 64;
@@ -243,11 +264,9 @@ function createParticleTexture(r, g, b) {
   return new THREE.CanvasTexture(c);
 }
 
-/* ----- Forma de corazón (punta abajo) ----- */
 function createHeartShape(s) {
   const shape = new THREE.Shape();
-  // Dibuja corazón con lóbulos arriba y punta abajo
-  shape.moveTo(0, -s * 1.5);  // punta inferior
+  shape.moveTo(0, -s * 1.5);
   shape.bezierCurveTo(-s, -s * 0.75, -s * 1.7, -s * 0.15, -s * 1.7, s * 0.5);
   shape.bezierCurveTo(-s * 1.7, s * 1.25, -s * 0.5, s * 1.25, 0, s * 0.5);
   shape.bezierCurveTo(s * 0.5, s * 1.25, s * 1.7, s * 1.25, s * 1.7, s * 0.5);
@@ -255,18 +274,15 @@ function createHeartShape(s) {
   return shape;
 }
 
-/* ----- Textura de estrella fugaz (cometa con cola) ----- */
 function createShootingStarTexture() {
   const c = document.createElement('canvas');
   c.width = 256; c.height = 32;
   const ctx = c.getContext('2d');
-
-  // Cola con gradiente
   const grad = ctx.createLinearGradient(0, 16, 256, 16);
   grad.addColorStop(0, 'rgba(255,255,255,0)');
   grad.addColorStop(0.5, 'rgba(255,250,220,0.15)');
   grad.addColorStop(0.8, 'rgba(255,250,200,0.5)');
-  grad.addColorStop(0.95, 'rgba(255,255,240,0.9)');
+  grad.addColorStop(0.95, 'rgba(255,250,200,0.9)');
   grad.addColorStop(1, 'rgba(255,255,255,1)');
   ctx.fillStyle = grad;
   ctx.beginPath();
@@ -276,20 +292,24 @@ function createShootingStarTexture() {
   ctx.lineTo(240, 26);
   ctx.lineTo(0, 20);
   ctx.fill();
-
-  // Cabeza brillante
   const head = ctx.createRadialGradient(250, 16, 0, 250, 16, 12);
   head.addColorStop(0, 'rgba(255,255,255,1)');
   head.addColorStop(0.5, 'rgba(255,250,200,0.6)');
   head.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = head;
   ctx.fillRect(238, 4, 18, 28);
-
   return new THREE.CanvasTexture(c);
 }
 
 function initGalaxy() {
+  console.log('[Valentine] initGalaxy() ejecutando...');
+  
   const canvas = document.getElementById('galaxy-canvas');
+  if (!canvas) {
+    console.error('[Valentine] ERROR: No se encontró #galaxy-canvas');
+    return;
+  }
+  
   const isMobile = window.innerWidth < 768;
 
   scene = new THREE.Scene();
@@ -305,7 +325,6 @@ function initGalaxy() {
   renderer.toneMappingExposure = 1.2;
   renderer.setClearColor(0x020008);
 
-  // Controles — zoom custom suave
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
@@ -315,7 +334,7 @@ function initGalaxy() {
   controls.autoRotateSpeed = 0.5;
   controls.enablePan = true;
   controls.rotateSpeed = 0.4;
-  controls.enableZoom = false;       // DESACTIVAR zoom nativo
+  controls.enableZoom = false;
   controls.panSpeed = 0.4;
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   controls.target.set(0, 0, 0);
@@ -325,19 +344,18 @@ function initGalaxy() {
     RIGHT: THREE.MOUSE.PAN,
   };
 
-  // === ZOOM SUAVE PERSONALIZADO ===
-  let targetZoomDistance = camera.position.length(); // distancia actual
+  // Zoom suave personalizado
+  let targetZoomDistance = camera.position.length();
 
   renderer.domElement.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY > 0 ? 1.05 : 0.95; // 5% por scroll step
+    const zoomFactor = e.deltaY > 0 ? 1.05 : 0.95;
     targetZoomDistance = Math.max(
       controls.minDistance,
       Math.min(controls.maxDistance, targetZoomDistance * zoomFactor)
     );
   }, { passive: false });
 
-  // Touch pinch para móvil
   let lastTouchDist = 0;
   renderer.domElement.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
@@ -362,12 +380,10 @@ function initGalaxy() {
     }
   }, { passive: true });
 
-  // Guardar referencia para el animate loop
   scene.userData.targetZoomDistance = targetZoomDistance;
   scene.userData.getTargetZoom = () => targetZoomDistance;
   scene.userData.setTargetZoom = (v) => { targetZoomDistance = v; };
 
-  // Detener autoRotate al interactuar
   renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; });
   renderer.domElement.addEventListener('pointerup', () => {
     setTimeout(() => { controls.autoRotate = true; }, 3000);
@@ -384,6 +400,8 @@ function initGalaxy() {
 
   window.addEventListener('resize', onWindowResize);
   animate();
+  
+  console.log('[Valentine] initGalaxy() completada exitosamente');
 }
 
 // --------------- ESTRELLAS ---------------
@@ -467,7 +485,6 @@ function buildNebula(isMobile) {
 function buildCentralHeartMesh() {
   const shape = createHeartShape(3);
 
-  // Corazón principal — sin rotación, shape ya está correcto
   const geo = new THREE.ExtrudeGeometry(shape, {
     depth: 2,
     bevelEnabled: true,
@@ -490,7 +507,6 @@ function buildCentralHeartMesh() {
   centralHeart = new THREE.Mesh(geo, material);
   scene.add(centralHeart);
 
-  // Halo de brillo exterior
   const glowGeo = new THREE.ExtrudeGeometry(shape, {
     depth: 0.2, bevelEnabled: true, bevelSize: 1.2, bevelThickness: 0.5, bevelSegments: 3,
   });
@@ -501,12 +517,11 @@ function buildCentralHeartMesh() {
   heartGlow.scale.set(1.4, 1.4, 1.4);
   scene.add(heartGlow);
 
-  // Nombre ESCRITO en el corazón (como hijo del corazón)
+  // Nombre en el corazón
   const nc = document.createElement('canvas');
   nc.width = 512; nc.height = 160;
   const nctx = nc.getContext('2d');
   nctx.clearRect(0, 0, nc.width, nc.height);
-  // Glow
   nctx.shadowColor = '#ffffff';
   nctx.shadowBlur = 15;
   nctx.font = 'bold 56px Pacifico, cursive';
@@ -523,11 +538,11 @@ function buildCentralHeartMesh() {
     depthTest: false,
   }));
   heartNameSprite.scale.set(7, 2.2, 1);
-  heartNameSprite.position.set(0, 0.3, 1.2);  // sobre la cara frontal
-  centralHeart.add(heartNameSprite);  // hijo del corazón, se mueve con él
+  heartNameSprite.position.set(0, 0.3, 1.2);
+  centralHeart.add(heartNameSprite);
 }
 
-// --------------- ESTRELLAS FUGACES (sprites tipo cometa) ---------------
+// --------------- ESTRELLAS FUGACES ---------------
 let shootingStarTexture;
 
 function buildShootingStars(isMobile) {
@@ -563,7 +578,6 @@ function resetShootingStar(star) {
   );
   const dirX = -side * (0.4 + Math.random() * 0.3);
   const dirY = -(0.15 + Math.random() * 0.2);
-  // Rotación para que apunte en su dirección de movimiento
   const angle = Math.atan2(dirY, dirX);
   star.material.rotation = angle;
   star.userData = {
@@ -742,15 +756,12 @@ function animate() {
   requestAnimationFrame(animate);
   const t = performance.now() * 0.001;
 
-  // Estrellas giran
   const sf = scene.userData.starField;
   if (sf) { sf.rotation.y += 0.0002; sf.rotation.x += 0.00005; }
 
-  // Nebulosa gira
   const neb = scene.userData.nebula;
   if (neb) { neb.rotation.y += 0.0004; }
 
-  // Corazón late (doble pulso realista)
   if (centralHeart) {
     const beat = 1 + Math.sin(t * 2.5) * 0.1 + Math.sin(t * 5) * 0.03;
     centralHeart.scale.set(beat, beat, beat);
@@ -767,7 +778,6 @@ function animate() {
     heartNameSprite.material.opacity = 0.85 + Math.sin(t * 2) * 0.15;
   }
 
-  // Fotos orbitan
   photoGroups.forEach((g) => {
     const d = g.userData;
     d.angle += d.speed * 0.004;
@@ -777,7 +787,6 @@ function animate() {
     g.rotation.y = -d.angle + Math.PI;
   });
 
-  // Frases orbitan
   quoteSprites.forEach((s) => {
     const d = s.userData;
     d.angle += d.speed * 0.003;
@@ -786,7 +795,6 @@ function animate() {
     s.position.y = d.yBase + Math.sin(t * d.bobSpeed) * 0.6;
   });
 
-  // Estrellas fugaces (movimiento suave tipo cometa)
   shootingStars.forEach((star) => {
     const d = star.userData;
     if (d.delay > 0) { d.delay--; return; }
@@ -802,7 +810,6 @@ function animate() {
     star.position.y += d.dirY * d.speed;
   });
 
-  // Corazones volando
   flyingHearts.forEach((h) => {
     const d = h.userData;
     d.angle += d.speed * 0.012;
@@ -811,12 +818,11 @@ function animate() {
     h.position.y = d.yBase + Math.sin(t * d.bobSpeed) * d.bobAmp;
   });
 
-  // Zoom suave interpolado (lerp)
   if (scene.userData.getTargetZoom) {
     const target = scene.userData.getTargetZoom();
     const dir = camera.position.clone().sub(controls.target).normalize();
     const currentDist = camera.position.distanceTo(controls.target);
-    const newDist = currentDist + (target - currentDist) * 0.05; // lerp 5% por frame
+    const newDist = currentDist + (target - currentDist) * 0.05;
     camera.position.copy(controls.target).add(dir.multiplyScalar(newDist));
   }
 
@@ -842,13 +848,11 @@ function onWindowResize() {
 let audioPlayer = null;
 
 function loadMusicPlayer(filename) {
-  // Cargar audio
   audioPlayer = new Audio(filename);
   audioPlayer.loop = true;
   audioPlayer.volume = 0.7;
   audioPlayer.preload = 'auto';
 
-  // Mostrar botón inmediatamente si hay música configurada
   const btn = document.getElementById('music-toggle');
   if (btn) {
     btn.classList.remove('hidden');
@@ -878,14 +882,13 @@ function setupMusicButton() {
     }
   });
 
-  // Auto-play al entrar a la galaxia
   window._valentineStartMusic = () => {
     if (audioPlayer && !playing) {
       audioPlayer.play().then(() => {
         btn.classList.add('playing');
         playing = true;
       }).catch(() => {
-        // Navegador bloquea autoplay — el usuario puede dar click al botón
+        // Navegador bloquea autoplay
       });
     }
   };
