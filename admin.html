@@ -4,405 +4,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Amor - Admin</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💌</text></svg>">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
-    
-    <!-- Librería de compresión para links -->
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
-
-    <style>
-        :root {
-            --bg-dark: #0f0518;
-            --panel-bg: #1a0a2e;
-            --primary: #e91e63;
-            --accent: #ffd54f;
-            --text: #ffffff;
-            --text-muted: #b0bec5;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            background-color: rgba(26, 10, 46, 0.95);
-            padding: 1rem 2rem;
-            border-bottom: 1px solid rgba(233, 30, 99, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-
-        .brand {
-            font-family: 'Pacifico', cursive;
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-
-        .main-container {
-            flex: 1;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            width: 100%;
-        }
-
-        .step-card {
-            background-color: var(--panel-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        h2 {
-            color: var(--accent);
-            margin-bottom: 1.2rem;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-group { margin-bottom: 1.2rem; }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        input[type="text"], input[type="date"], input[type="file"] {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background-color: #0f0518;
-            color: #fff;
-            font-size: 1rem;
-        }
-
-        input:focus { border-color: var(--primary); outline: none; }
-
-        /* Grid de fotos */
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin-top: 1rem;
-        }
-
-        .photo-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #333;
-        }
-
-        .photo-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .photo-remove {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0,0,0,0.7);
-            color: #ff4444;
-            border: none;
-            cursor: pointer;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .add-photo-btn {
-            border: 2px dashed #444;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            height: 100%;
-            min-height: 100px;
-            transition: all 0.3s;
-        }
-
-        .add-photo-btn:hover { border-color: var(--primary); background: rgba(233, 30, 99, 0.1); }
-        .add-text { font-size: 2rem; color: #666; }
-
-        /* Lista de frases */
-        .phrases-list {
-            margin-bottom: 1rem;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .phrase-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .phrase-text { font-size: 0.9rem; }
-        .phrase-emoji { margin-right: 10px; }
-        .phrase-remove {
-            background: none;
-            border: none;
-            color: #ff5555;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-
-        .add-phrase-box { display: flex; gap: 10px; }
-        .add-phrase-btn-action {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* Generar Link */
-        .generate-btn {
-            width: 100%;
-            background: linear-gradient(45deg, var(--primary), #c2185b);
-            color: white;
-            padding: 1rem;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .generate-btn:hover { transform: scale(1.02); }
-
-        .result-box {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: rgba(0, 255, 127, 0.05);
-            border: 1px solid rgba(0, 255, 127, 0.2);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .generated-link {
-            width: 100%;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid #444;
-            color: var(--accent);
-            padding: 0.8rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            font-family: monospace;
-            text-align: center;
-        }
-
-        .copy-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #333;
-            border: none;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .link-wrapper { position: relative; }
-
-        .link-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-action { text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;}
-        .btn-preview { background-color: #333; color: white; border: 1px solid #555; }
-        .btn-whatsapp { background-color: #25D366; color: #fff; font-weight: bold; }
-
-        .hidden { display: none; }
-        .validation-msg { color: #ff5555; margin-bottom: 10px; font-size: 0.9rem; text-align: center; }
-
-        .copy-feedback {
-            color: #4CAF50;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .music-preview-box {
-            margin-top: 10px;
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .admin-footer {
-            margin-top: auto;
-            text-align: center;
-            padding: 1.5rem;
-            color: #666;
-            font-size: 0.8rem;
-        }
-
-        /* Checkbox bonito */
-        .check-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        input[type="checkbox"] { width: 18px; height: 18px; }
-
-    </style>
+    <title>💝 Configurador - Mi San Valentín</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="admin.css?v=2">
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 </head>
 
-<body>
+<body class="admin-body">
 
-    <header class="header">
-        <div class="brand">❤️ Panel de Amor</div>
-        <!-- <a href="index.html" style="color:white; text-decoration:none; font-size:0.9rem;">Ir al inicio →</a> -->
+    <!-- Corazones de fondo -->
+    <div id="hearts-bg"></div>
+
+    <header class="admin-header">
+        <div class="header-content">
+            <span class="header-emoji">💝</span>
+            <h1>Mi San Valentín</h1>
+            <p class="header-sub">Configura tu experiencia mágica de amor</p>
+        </div>
     </header>
 
-    <main class="main-container">
-        
-        <p style="text-align: center; margin-bottom: 2rem; color: #b0bec5;">
-            Configura tu regalo y genera un link único para enviar. <br>
-            <small>Tus datos se guardan solo en este navegador hasta generar el link.</small>
-        </p>
+    <main class="admin-main">
 
-        <!-- 1. Pareja -->
-        <section class="step-card">
-            <h2>1. Datos de la Pareja 👩‍❤️‍👨</h2>
-            <div class="form-group">
-                <label>Nombre de tu pareja</label>
-                <input type="text" id="partner-name" placeholder="Ej: María, Mi Amor, Princesa...">
+        <!-- ====== SECCIÓN 1: Datos de la pareja ====== -->
+        <section class="config-card" data-step="1">
+            <div class="card-header">
+                <span class="card-icon">👤</span>
+                <div>
+                    <h2>Datos de tu Pareja</h2>
+                    <p class="card-desc">Esta información aparecerá en la experiencia</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Fecha de Aniversario (para contador)</label>
-                <input type="date" id="anniversary-date">
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="partner-name">Nombre de tu pareja</label>
+                    <input type="text" id="partner-name" placeholder="Ej: María, Carlos, Mi Amor..." maxlength="30">
+                    <span class="input-hint">Aparecerá en la pregunta: "¿{nombre}, quieres ser mi San Valentín?"</span>
+                </div>
+                <div class="form-group">
+                    <label for="anniversary-date">Fecha de aniversario</label>
+                    <input type="date" id="anniversary-date">
+                    <span class="input-hint">Se calculará cuántos días llevan juntos 💕</span>
+                </div>
             </div>
         </section>
 
-        <!-- 2. Fotos -->
-        <section class="step-card">
-            <h2>2. Fotos Juntos 📸 <small id="photo-info" style="font-size:0.8rem; margin-left:auto; color:#b0bec5;">0/15</small></h2>
-            <p style="font-size: 0.85rem; color: #888; margin-bottom: 10px;">
-                Se comprimirán automáticamente. Máximo 15 fotos recomendadas.
-            </p>
-            <div class="photo-grid" id="photo-grid">
-                <label class="add-photo-btn" id="add-photo-label">
+        <!-- ====== SECCIÓN 2: Fotos ====== -->
+        <section class="config-card" data-step="2">
+            <div class="card-header">
+                <span class="card-icon">📸</span>
+                <div>
+                    <h2>Fotos Juntos</h2>
+                    <p class="card-desc">Flotarán en la galaxia de amor (máx. 30 fotos)</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="photo-grid" class="photo-grid">
+                    <!-- Las fotos aparecerán aquí -->
+                    <label class="photo-add-btn" for="photo-input" id="add-photo-label">
+                        <span class="add-icon">+</span>
+                        <span class="add-text">Agregar foto</span>
+                    </label>
                     <input type="file" id="photo-input" accept="image/*" multiple hidden>
-                    <span class="add-text">+</span>
-                </label>
+                </div>
+                <p id="photo-info" class="photo-info">0 / 30 fotos</p>
             </div>
         </section>
 
-        <!-- 3. Frases -->
-        <section class="step-card">
-            <h2>3. Frases de Amor 💬</h2>
-            <div class="phrases-list" id="phrases-list">
-                <!-- Se llenan con JS -->
-            </div>
-            <div class="add-phrase-box">
-                <input type="text" id="new-phrase-input" placeholder="Escribe algo lindo...">
-                <button id="add-phrase-btn" class="add-phrase-btn-action">Agregar</button>
-            </div>
-        </section>
-
-        <!-- 4. Música -->
-        <section class="step-card">
-            <h2>4. Música de Fondo 🎵</h2>
-            <div class="form-group">
-                <label class="add-photo-btn" style="min-height: 80px; width: 100%; border-style: dashed;">
-                    <input type="file" id="music-file-input" accept="audio/mp3, audio/mpeg" hidden>
-                    <div style="text-align: center;">
-                        <span style="font-size: 1.5rem;">📂</span><br>
-                        <span style="font-size: 0.9rem;">Seleccionar MP3</span>
-                    </div>
-                </label>
-                <div style="font-size: 0.75rem; color: #666; margin-top: 5px;">
-                    Coloca el MP3 en la carpeta del proyecto. Máx 10MB. Sin publicidad 🚫
-                </div>
-
-                <div id="music-preview" class="music-preview-box hidden">
-                    <div id="music-file-name" style="font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; color: var(--accent);">
-                        Canción Seleccionada
-                    </div>
-                    <audio id="music-audio-preview" controls style="height: 30px;"></audio>
-                </div>
-            </div>
-        </section>
-
-        <!-- GENERAR -->
-        <section class="step-card" style="border-color: var(--primary);">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
-                <div style="background: var(--primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                    🔗
-                </div>
+        <!-- ====== SECCIÓN 3: Frases de amor ====== -->
+        <section class="config-card" data-step="3">
+            <div class="card-header">
+                <span class="card-icon">💌</span>
                 <div>
-                    <h3 style="color: #fff; font-size: 1.1rem;">Generar y Compartir</h3>
-                    <p style="font-size: 0.8rem; color: #aaa;">Crea el link mágico para enviar a tu pareja</p>
+                    <h2>Frases de Amor</h2>
+                    <p class="card-desc">Personaliza las frases que flotarán en la galaxia</p>
                 </div>
             </div>
-
-            <p id="validation-msg" class="validation-msg hidden">⚠️ Faltan datos</p>
-
-            <button id="generate-btn" class="generate-btn">
-                ✨ GENERAR MI LINK ✨
-            </button>
-
-            <!-- Resultado -->
-            <div id="link-result" class="result-box hidden">
-                <p style="font-size: 1rem; color: #fff; margin-bottom: 0.5rem;">🎉 ¡Tu link está listo!</p>
-                
-                <div class="link-wrapper">
-                    <input type="text" id="generated-link" class="generated-link" readonly>
-                    <button id="copy-btn" class="copy-btn" title="Copiar">📋</button>
-                    <!-- Icono visual dentro del input a la derecha -->
+            <div class="card-body">
+                <div id="phrases-list" class="phrases-list">
+                    <!-- Frases aparecen aquí -->
                 </div>
-                
+                <div class="add-phrase-row">
+                    <input type="text" id="new-phrase-input" placeholder="Escribe una frase de amor..." maxlength="50">
+                    <button id="add-phrase-btn" class="btn-add-phrase">+ Agregar</button>
+                </div>
+                <p class="input-hint">Puedes agregar hasta 25 frases. Las predeterminadas se pueden eliminar.</p>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 4: Música ====== -->
+        <section class="config-card" data-step="4">
+            <div class="card-header">
+                <span class="card-icon">🎵</span>
                 <div>
+                    <h2>Canción de Fondo</h2>
+                    <p class="card-desc">Agrega un archivo MP3 que sonará en la experiencia</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Subir archivo MP3</label>
+                    <label class="photo-add-btn" for="music-file-input"
+                        style="display:inline-flex; width:auto; padding: 0.6rem 1.5rem; cursor:pointer;">
+                        <span class="add-icon">🎶</span>
+                        <span class="add-text">Seleccionar MP3</span>
+                    </label>
+                    <input type="file" id="music-file-input" accept="audio/mp3,audio/mpeg,audio/*" hidden>
+                    <span class="input-hint">Coloca el MP3 en la carpeta del proyecto. Máx 10MB. Sin publicidad
+                        🚫</span>
+                </div>
+                <div id="music-preview" class="music-preview hidden">
+                    <p id="music-file-name" style="color: var(--gold); font-size: 0.85rem; margin-bottom: 0.4rem;">✅
+                        Archivo: —</p>
+                    <audio id="music-audio-preview" controls style="width:100%; border-radius:8px;"></audio>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== SECCIÓN 4: Generar link ====== -->
+        <section class="config-card generate-card" data-step="4">
+            <div class="card-header">
+                <span class="card-icon">🔗</span>
+                <div>
+                    <h2>Generar y Compartir</h2>
+                    <p class="card-desc">Crea el link mágico para enviar a tu pareja</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="validation-msg" class="validation-msg hidden"></div>
+
+                <button id="generate-btn" class="btn-generate">
+                    <span class="gen-icon">✨</span>
+                    <span>GENERAR MI LINK</span>
+                    <span class="gen-icon">✨</span>
+                </button>
+
+                <div id="link-result" class="link-result hidden">
+                    <p class="link-label">🎉 ¡Tu link está listo!</p>
+                    <div class="link-box">
+                        <input type="text" id="generated-link" readonly>
+                        <button id="copy-btn" class="btn-copy" title="Copiar link">📋</button>
+                    </div>
                     <p id="copy-feedback" class="copy-feedback hidden">✅ ¡Link copiado!</p>
                     <div class="link-actions">
                         <a id="preview-btn" class="btn-preview" href="#" target="_blank">👁️ Vista Previa</a>
@@ -418,7 +163,7 @@
         <p>Hecho con ❤️ para el día de San Valentín</p>
     </footer>
 
-    <script type="module" src="admin.js?v=3"></script>
+    <script type="module" src="admin.js?v=4"></script>
 </body>
 
 </html>
