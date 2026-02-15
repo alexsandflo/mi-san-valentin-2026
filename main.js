@@ -162,15 +162,18 @@ function setupTransition() {
     // Vibración en móvil
     if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
 
+    // intentamos reproducir el audio de inmediato para "desbloquearlo" en móviles
+    // ya que el clic cuenta como interacción del usuario
+    if (window._valentineStartMusic) {
+       window._valentineStartMusic();
+    }
+
     overlay.classList.add('active');
 
     setTimeout(() => {
       landing.classList.add('fade-out');
       galaxy.classList.remove('hidden');
       initGalaxy();
-
-      // Iniciar música al entrar a la galaxia
-      if (window._valentineStartMusic) window._valentineStartMusic();
 
       setTimeout(() => {
         overlay.classList.remove('active');
