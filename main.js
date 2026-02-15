@@ -319,7 +319,8 @@ function initGalaxy() {
   scene.fog = new THREE.FogExp2(0x050010, 0.004);
 
   camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1500);
-  camera.position.set(0, 8, 35);
+  // En móvil la cámara empieza más cerca para ver fotos mejor
+  camera.position.set(0, isMobile ? 5 : 8, isMobile ? 22 : 35);
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -331,18 +332,20 @@ function initGalaxy() {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
-  controls.minDistance = 8;
+  controls.minDistance = 5;  // Permite acercarse mucho más a las fotos
   controls.maxDistance = 120;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.4;
+  controls.autoRotateSpeed = isMobile ? 0.25 : 0.4; // Más lento en móvil para apreciar fotos
   controls.enablePan = true;
-  controls.rotateSpeed = 0.4;
-  controls.enableZoom = false;
+  controls.rotateSpeed = isMobile ? 0.6 : 0.4; // Más sensible al rotar en móvil
+  controls.enableZoom = true; // Zoom habilitado para pinch-to-zoom nativo
+  controls.zoomSpeed = 0.8;
   controls.panSpeed = 0.4;
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   controls.target.set(0, 0, 0);
   controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
 
+  // Zoom suave con scroll (desktop)
   let targetZoomDistance = camera.position.length();
   renderer.domElement.addEventListener('wheel', (e) => {
     e.preventDefault();
@@ -350,33 +353,12 @@ function initGalaxy() {
     targetZoomDistance = Math.max(controls.minDistance, Math.min(controls.maxDistance, targetZoomDistance * zoomFactor));
   }, { passive: false });
 
-  let lastTouchDist = 0;
-  renderer.domElement.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastTouchDist = Math.sqrt(dx * dx + dy * dy);
-    }
-  }, { passive: true });
-  renderer.domElement.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (lastTouchDist > 0) {
-        const scale = lastTouchDist / dist;
-        targetZoomDistance = Math.max(controls.minDistance, Math.min(controls.maxDistance, targetZoomDistance * (1 + (scale - 1) * 0.3)));
-      }
-      lastTouchDist = dist;
-    }
-  }, { passive: true });
-
   scene.userData.getTargetZoom = () => targetZoomDistance;
   scene.userData.setTargetZoom = (v) => { targetZoomDistance = v; };
 
   renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; });
   renderer.domElement.addEventListener('pointerup', () => {
-    setTimeout(() => { controls.autoRotate = true; }, 3000);
+    setTimeout(() => { controls.autoRotate = true; }, 4000);
   });
 
   buildStarField(isMobile);
@@ -385,7 +367,7 @@ function initGalaxy() {
   buildStarDust(isMobile);
   buildCentralHeartMesh();
   buildHeartOrbitRing();
-  buildPhotoFrames();
+  buildPhotoFrames(isMobile);
   buildQuoteSprites();
   buildShootingStars(isMobile);
   buildFlyingHeartsEmoji(isMobile);
@@ -662,16 +644,19 @@ function buildFlyingHeartsEmoji(isMobile) {
 }
 
 // --------------- MARCOS DE FOTOS (MEJORADOS) ---------------
-function buildPhotoFrames() {
+function buildPhotoFrames(isMobile) {
   const photos = CONFIG.photos;
   if (!photos || photos.length === 0) return;
   const total = photos.length;
-  const baseRadius = 16;
+  // En móvil: fotos más cerca del centro para verlas mejor
+  const baseRadius = isMobile ? 12 : 16;
 
   photos.forEach((dataUrl, idx) => {
     const texture = new THREE.TextureLoader().load(dataUrl);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const size = 4; const border = 0.35;
+    // En móvil: fotos más grandes (5.5 vs 4)
+    const size = isMobile ? 5.5 : 4;
+    const border = isMobile ? 0.4 : 0.35;
 
     const frame = new THREE.Mesh(
       new THREE.PlaneGeometry(size + border * 2, size + border * 2),
@@ -703,16 +688,16 @@ function buildPhotoFrames() {
     const group = new THREE.Group();
     group.add(frame); group.add(inner); group.add(photo); group.add(label);
 
-    // Distribución uniforme
+    // Distribución uniforme — en móvil las fotos están más cerca y menos separadas en Y
     const angle = (idx / total) * Math.PI * 2;
-    const radiusTier = baseRadius + (idx % 2) * 5;
-    const yOff = (idx % 2 === 0) ? 2 : -2;
+    const radiusTier = baseRadius + (idx % 2) * (isMobile ? 3 : 5);
+    const yOff = (idx % 2 === 0) ? (isMobile ? 1.5 : 2) : (isMobile ? -1.5 : -2);
     group.position.set(Math.cos(angle) * radiusTier, yOff, Math.sin(angle) * radiusTier);
     group.rotation.y = -angle + Math.PI;
 
     group.userData = {
-      angle, orbitRadius: radiusTier, speed: 0.06,
-      bobSpeed: 0.3 + Math.random() * 0.3, bobAmp: 0.2 + Math.random() * 0.2, yBase: yOff,
+      angle, orbitRadius: radiusTier, speed: isMobile ? 0.04 : 0.06,
+      bobSpeed: 0.3 + Math.random() * 0.3, bobAmp: 0.15 + Math.random() * 0.15, yBase: yOff,
     };
     photoGroups.push(group);
     scene.add(group);
