@@ -333,11 +333,107 @@ function initMusic() {
 }
 
 // =============================================
-//  8. INICIALIZACIÓN
+//  9. CARGAR CONFIGURACIÓN GUARDADA (Auto-relleno)
 // =============================================
 
+function loadSavedConfig() {
+    try {
+        const stored = localStorage.getItem('valentine_config');
+        if (stored) {
+            const config = JSON.parse(stored);
+            
+            // 1. Restaurar Nombre y Fecha
+            if (config.n) {
+                state.partnerName = config.n;
+                document.getElementById('partner-name').value = config.n;
+            }
+            if (config.d) {
+                state.anniversaryDate = config.d;
+                document.getElementById('anniversary-date').value = config.d;
+            }
+
+            // 2. Restaurar Frases
+            if (config.p && Array.isArray(config.p)) {
+                state.phrases = config.p;
+                renderAllPhrases();
+            }
+
+            // 3. Restaurar Fotos
+            if (config.i && Array.isArray(config.i)) {
+                state.photos = config.i;
+                // Reconstruir grid visualmente
+                const grid = document.getElementById('photo-grid');
+                const addLabel = document.getElementById('add-photo-label');
+                const info = document.getElementById('photo-info');
+                
+                // Limpiar grid actual (menos el botón de agregar)
+                grid.querySelectorAll('.photo-item').forEach(el => el.remove());
+                
+                // Renderizar cada foto guardada
+                state.photos.forEach((url, i) => {
+                    const div = document.createElement('div');
+                    div.classList.add('photo-item');
+                    div.dataset.index = i;
+
+                    const img = document.createElement('img');
+                    img.src = url;
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.classList.add('photo-remove');
+                    removeBtn.textContent = '✕';
+                    removeBtn.addEventListener('click', () => {
+                        state.photos.splice(i, 1);
+                        // Re-renderizar todo para actualizar índices
+                        // (Simplificación recursiva rápida)
+                        state.photos = state.photos.filter((_, idx) => idx !== i);
+                         // Guardar cambio
+                        localStorage.setItem('valentine_config', JSON.stringify({
+                             ...config, i: state.photos
+                        }));
+                        location.reload(); // Recarga rápida para actualizar vista (truco sucio pero efectivo aquí)
+                    });
+
+                    div.appendChild(img);
+                    div.appendChild(removeBtn);
+                    grid.insertBefore(div, addLabel);
+                });
+
+                info.textContent = `${state.photos.length} / ${MAX_PHOTOS} fotos`;
+                 if (state.photos.length >= MAX_PHOTOS) {
+                    addLabel.style.display = 'none';
+                }
+            }
+            
+            // 4. Música (Solo nombre, archivo real requiere re-upload por seguridad del navegador)
+            if (config.m) {
+                state.musicFile = config.m;
+                document.getElementById('music-file-name').textContent = `⚠️ Previo: ${config.m} (Vuelve a subirlo si cambiaste algo)`;
+            }
+        }
+    } catch (err) {
+        console.error('Error cargando config guardada:', err);
+    }
+}
+
+// Inicializar todo
 initPartnerInputs();
 initPhotoUpload();
-initPhrases();
+// initPhrases(); // Ya se llama en loadSavedConfig si hay datos, o manual abajo
+// Para evitar duplicados, limpiamos state.phrases si vamos a cargar
+loadSavedConfig();
+if (state.phrases.length === 0) initPhrases(); // Si no había nada guardado
+else {
+    const newInput = document.getElementById('new-phrase-input');
+    const addBtn = document.getElementById('add-phrase-btn');
+    addBtn.addEventListener('click', () => {
+         const text = newInput.value.trim();
+        if (!text || state.phrases.length >= MAX_PHRASES) return;
+        state.phrases.push(text);
+        newInput.value = '';
+        renderAllPhrases();
+    });
+    newInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+}
+
 initMusic();
 initGenerate();
