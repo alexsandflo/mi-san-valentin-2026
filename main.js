@@ -36,7 +36,20 @@ function loadConfig() {
     }
   }
 
-  // Fallback: intentar cargar de localStorage (mismo navegador)
+  // Fallback 1: Cargar desde archivo config.js (Persistente y recomendado para móviles)
+  if (window.VALENTINE_CONFIG) {
+    const config = window.VALENTINE_CONFIG;
+    return {
+      name: config.n || '',
+      date: config.d || '',
+      phrases: config.p || ['Te amo ❤️'],
+      photos: config.i || [],
+      youtubeId: config.yt || '',
+      musicFile: config.m || '',
+    };
+  }
+
+  // Fallback 2: intentar cargar de localStorage (mismo navegador)
   try {
     const stored = localStorage.getItem('valentine_config');
     if (stored) {
